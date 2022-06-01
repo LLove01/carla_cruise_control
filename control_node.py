@@ -1,3 +1,4 @@
+from concurrent.futures import process
 import glob
 import os
 import sys
@@ -6,6 +7,7 @@ import numpy as np
 from pid_controller import *
 from tf_detection import *
 from carla_helpers import *
+from lane_detection import *
 # from lane_detection import *
 
 try:
@@ -16,6 +18,21 @@ try:
 except IndexError:
     pass
 import carla
+
+
+def process_image(image):
+    # rgb camera returns 4 chanels
+    image = np.array(image.raw_data)
+    img = image.reshape((600, 800, 4))
+    # cutting out alpha chanel
+    img = img[:, :, :3]
+    # tf object detection
+    objects_img = show_inference(detection_model, img)
+    # lanes detection
+    lanes_img = find_lanes(img)
+    cv2.imshow("rgb cam", lanes_img)
+    cv2.waitKey(50)
+    return img
 
 
 class Cybertruck:
@@ -46,7 +63,7 @@ class Cybertruck:
         camera_location = carla.Transform(carla.Location(x=1.5, z=2.4))
         self.camera = self.world.spawn_actor(
             camera_bp, camera_location, attach_to=self.vehicle)
-        self.camera.listen(lambda image: recognise_objects(image))
+        self.camera.listen(lambda image: process_image(image))
         self.actor_list.append(self.camera)
         # collision sensor
         collision_bp = self.world.get_blueprint_library().find('sensor.other.collision')

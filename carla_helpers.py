@@ -3,7 +3,7 @@ import os
 import sys
 import numpy as np
 
-from tf_detection import *
+from control_node import process_image
 
 try:
     sys.path.append(glob.glob('../carla/dist/carla-*%d.%d-%s.egg' % (
@@ -35,7 +35,7 @@ def reset(self):
     camera_location = carla.Transform(carla.Location(x=1.5, z=2.4))
     self.camera = self.world.spawn_actor(
         camera_bp, camera_location, attach_to=self.vehicle)
-    self.camera.listen(lambda image: recognise_objects(image))
+    self.camera.listen(lambda image: process_image(image))
     self.actor_list.append(self.camera)
     # collision sensor
     collision_bp = self.world.get_blueprint_library().find('sensor.other.collision')
