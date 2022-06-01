@@ -108,3 +108,17 @@ def show_inference(model, image):
     # display(Image.fromarray(image_np))
     # display_image(image_np)
     return image_np
+
+
+def recognise_objects(image):
+    # rgb camera returns 4 chanels
+    image = np.array(image.raw_data)
+    img = image.reshape((600, 800, 4))
+    # cutting out alpha chanel
+    img = img[:, :, :3]
+    # tf object detection
+    img = show_inference(detection_model, img)
+    cv2.imshow("rgb cam", img)
+    # cv2.imshow("gray image", img_gray)
+    cv2.waitKey(50)
+    return img

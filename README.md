@@ -1,9 +1,6 @@
 # carla_cruise_control
 Implementing cruise control in Carla simulator.
 
-# carla_autonomous
-Implementing cruise control in Carla simulator 
-
 # setup
 works for python 3.8 <br/>
 carla currently supports 3.6, 3.7, 3.8  <br/>
@@ -28,7 +25,7 @@ pip install object_detection_api
 
 # running the code 
 STARTING CARLA: .\CarlaUE4 -dx11 -quality-level=Low -carla-port=3000 <br/> <br/>
-PYTHON API::  <br/>
+PYTHON API:  <br/>
 first activate local python 3.8 environment: py38_env\Scripts\activate  <br/>
 cd to code folder  <br/>
 python control_node.py
