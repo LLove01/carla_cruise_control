@@ -34,10 +34,10 @@ class PID_Controller():
         self.dir_controller = PID_Direction_Control(
             self.vehicle, **args_direction)
 
-    def run_step(self, target_speed, waypoint):
+    def run_step(self, target_speed, lines):
 
         acceleration = self.accel_controller.run_step(target_speed)
-        current_steering = self.dir_controller.run_step(waypoint)
+        current_steering = self.dir_controller.run_step(lines)
         control = carla.VehicleControl()
         # acceleration
         if acceleration >= 0.0:
@@ -101,29 +101,23 @@ class PID_Direction_Control():
         self.dt = dt
         self.error_buffer = queue.deque(maxlen=10)
 
-    def run_step(self, waypoint):
-        return self.direction_controller(waypoint, self.vehicle.get_transform())
+    def run_step(self, lines):
+        return self.direction_controller(lines)
 
-    def direction_controller(self, waypoint, vehicle_transform):
-        v_begin = vehicle_transform.location
-        v_end = v_begin + carla.Location(x=math.cos(math.radians(
-            vehicle_transform.rotation.yaw)), y=math.sin(math.radians(vehicle_transform.rotation.yaw)))
-        v_vec = np.array([v_end.x - v_begin.x, v_end.y - v_begin.y, 0.0])
-        w_vec = np.array([waypoint.transform.location.x - v_begin.x,
-                         waypoint.transform.location.y - v_begin.y, 0.0])
-        dot = math.acos(np.clip(np.dot(w_vec, v_vec) /
-                        np.linalg.norm(w_vec)*np.linalg.norm(v_vec), -1.0, 1.0))
-        cross = np.cross(v_vec, w_vec)
-
-        if cross[2] < 0:
-            dot *= -1
-        self.error_buffer.append(dot)
-
-        if len(self.error_buffer) >= 2:
-            de = (self.error_buffer[-1] - self.error_buffer[-2]) / self.dt
-            ie = sum(self.error_buffer)*self.dt
+    def direction_controller(self, lines):
+        if type(lines) == 'NoneType':
+            return 0
+        avg_line_coords = np.average(lines, axis=0)
+        avg_line_dist = (avg_line_coords[0][1] + avg_line_coords[0][3]) / 2
+        print(avg_line_dist)
+        steer = 0
+        if avg_line_dist >= 420 and avg_line_dist <= 460:
+            steer = 0
+            # print('straight')
+        elif avg_line_dist > 460:
+            steer = -0.3
+            # print('left')
         else:
-            de = 0.0
-            ie = 0.0
-        # normalizing
-        return np.clip((self.K_P*dot) + (self.K_I*ie) + (self.K_D*de), -1.0, 1.0)
+            steer = 0.3
+            # print('right')
+        return steer

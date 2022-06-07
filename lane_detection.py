@@ -12,10 +12,15 @@ def canny(image):
     return canny
 
 
-def region_of_interest(image):
+def region_of_interest(image, label):
     height = image.shape[0]
-    # array of polygons
-    polygons = np.array([[(100, height - 20), (700, height - 20), (370, 275)]])
+    if label == 'FW':
+        # array of polygons
+        polygons = np.array(
+            [[(100, height - 20), (700, height - 20), (370, 275)]])
+    elif label == 'R':
+        polygons = np.array(
+            [[(100, height - 20), (700, height - 20), (700, int(height/2)), (100, int(height/2))]])
     mask = np.zeros_like(image)
     cv2.fillPoly(mask, polygons, 255)
     # bitwise & of each homologous pixel in both arrays -> showing only the region of interest
@@ -70,25 +75,27 @@ def average_slope_intercept(image, lines):
         return np.array([right_line])
 
 
-def find_lanes(image):
+def get_lanes(image, label):
     # takes rgb image as argument - 3 channels
     lane_image = np.copy(image)
     # canny filter
     canny_image = canny(lane_image)
     # region of interest
-    cropped_image = region_of_interest(canny_image)
+    cropped_image = region_of_interest(canny_image, label)
     # detecting straight lines (image, theta, row, threshold, placeholder)
     # theta, row ... resolution of hough space - size of bins
     # threshold ... number of intersections needed to detect a line
     lines = cv2.HoughLinesP(cropped_image, 2, np.pi / 180,
                             100, np.array([]), minLineLength=40, maxLineGap=5)
     # averaged_lines = average_slope_intercept(lane_image, lines)
+
     # print(f'lines: {lines}')
     # print(f'averaged lines: {averaged_lines}')
+    # takes rgb image as argument - 3 channels
     line_image = display_lines(lane_image, lines)
     overlay_image = cv2.addWeighted(lane_image, 0.8, line_image, 1, 1)
     # plt.imshow(canny_image)
     # plt.show()
     # cv2.imshow('result', overlay_image)
     # cv2.waitKey(0)
-    return overlay_image
+    return lines, overlay_image
