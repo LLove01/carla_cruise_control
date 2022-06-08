@@ -22,7 +22,6 @@ lines = []
 
 
 def process_fw(image):
-    global lines
     # rgb camera returns 4 chanels
     image = np.array(image.raw_data)
     img = image.reshape((600, 800, 4))
@@ -31,12 +30,11 @@ def process_fw(image):
     # tf object detection
     # objects_img = show_inference(detection_model, img)
     # lanes detection
-    found_lines, lanes_img = get_lanes(img, 'FW')
-    # # refreshing global list
-    # lines = found_lines
+    _, lanes_img = get_lanes(img, 'FW')
+
     # display feed
-    cv2.imshow("rgb cam", lanes_img)
-    cv2.waitKey(500)
+    # cv2.imshow("hood cam", lanes_img)
+    # cv2.waitKey(500)
     return img
 
 
@@ -47,14 +45,12 @@ def process_r(image):
     img = image.reshape((600, 800, 4))
     # cutting out alpha chanel
     img = img[:, :, :3]
-    # tf object detection
-    # objects_img = show_inference(detection_model, img)
     # lanes detection
     found_lines, lanes_img = get_lanes(img, 'R')
     # refreshing global list
     lines = found_lines
     # display feed
-    # cv2.imshow("rgb cam", lanes_img)
+    # cv2.imshow("side cam", lanes_img)
     # cv2.waitKey(500)
     return img
 
@@ -77,6 +73,8 @@ class Cybertruck:
         print("Car spawned")
         self.vehicle_controller = PID_Controller(self.vehicle, args_acceleration={
             'K_P': 1, 'K_D': 0.0, 'K_I': 0.0}, args_direction={'K_P': 1, 'K_D': 0.0, 'K_I': 0.0})
+
+        # FORWARD CAMERA
         fw_cam_bp = self.bp_lib.find('sensor.camera.rgb')
         # change the dimensions of the image
         fw_cam_bp.set_attribute('image_size_x', '800')
@@ -90,7 +88,8 @@ class Cybertruck:
         # add sensor to list of actors
         self.actor_list.append(self.fw_cam)
         # do something with this sensor
-        # self.fw_cam.listen(lambda data: process_fw(data))
+        self.fw_cam.listen(lambda data: process_fw(data))
+
         # RIGHT SIDE CAMERA
         r_cam_bp = self.bp_lib.find('sensor.camera.rgb')
         r_cam_bp.set_attribute('image_size_x', '800')
@@ -117,8 +116,6 @@ class Cybertruck:
     def run(self):
         try:
             while True:
-                # waypoints = self.world.get_map().get_waypoint(self.vehicle.get_location())
-                # waypoint = np.random.choice(waypoints.next(0.3))
                 control_signal = self.vehicle_controller.run_step(
                     30, lines)
                 self.vehicle.apply_control(control_signal)

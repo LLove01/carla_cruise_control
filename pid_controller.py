@@ -105,19 +105,22 @@ class PID_Direction_Control():
         return self.direction_controller(lines)
 
     def direction_controller(self, lines):
-        if type(lines) == 'NoneType':
+        if lines is None:
             return 0
+        if lines.ndim == 0:
+            return 0
+        # lines detected -> calculating average distance
         avg_line_coords = np.average(lines, axis=0)
         avg_line_dist = (avg_line_coords[0][1] + avg_line_coords[0][3]) / 2
-        print(avg_line_dist)
+        # print(avg_line_dist)
         steer = 0
         if avg_line_dist >= 420 and avg_line_dist <= 460:
             steer = 0
             # print('straight')
         elif avg_line_dist > 460:
-            steer = -0.3
+            steer = -0.2
             # print('left')
         else:
-            steer = 0.3
+            steer = 0.2
             # print('right')
         return steer
